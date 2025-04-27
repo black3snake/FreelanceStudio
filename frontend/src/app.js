@@ -1,8 +1,11 @@
+import "./styles/styles.scss";
 import {Router} from "./router.js";
+
 
 class App {
     constructor() {
-        this.router = new Router();
+        console.log('App.js loaded');
+        new Router();
     }
 }
 

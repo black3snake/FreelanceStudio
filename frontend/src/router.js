@@ -7,7 +7,6 @@ export class Router {
         this.titlePageElement = document.getElementById('title');
         this.contentPageElement = document.getElementById('content');
 
-        this.initEvents();
         this.routes = [
             {
                 route: '/',
@@ -39,6 +38,7 @@ export class Router {
                 }
             },
         ];
+        this.initEvents();
     }
 
     initEvents() {
@@ -48,15 +48,17 @@ export class Router {
 
     async activateRoute() {
         const urlRoute = window.location.pathname;
-        const newRoute = this.routes.find(item => item.id === urlRoute);
+        const newRoute = this.routes.find(item => item.route === urlRoute);
 
         if (newRoute) {
             if (newRoute.title) {
                 this.titlePageElement.innerText = newRoute.title + ' | FreelanceStudio';
+                console.log(newRoute.title);
             }
             if (newRoute.filePathTemplate) {
-                this.contentPageElement.innerHTML = await fetch(newRoute.filePathTemplate).then(response =>
-                    response.text());
+                this.contentPageElement.innerHTML =
+                    await fetch(newRoute.filePathTemplate).then(response => response.text());
+                console.log(newRoute.filePathTemplate);
 
             }
             if (newRoute.load && typeof newRoute.load === 'function') {
