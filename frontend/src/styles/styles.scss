@@ -1,3 +1,16 @@
+@use "login";
+
 body {
     //background: #93b893;
+}
+.sidebar {
+    .image {
+        i.fa {
+            color: white;
+            font-size: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
 }
