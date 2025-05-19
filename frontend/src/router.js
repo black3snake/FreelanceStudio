@@ -5,6 +5,9 @@ import {Logout} from "./components/auth/logout.js";
 import {FreelancersList} from "./components/freelancers/freelancers-list.js";
 import {FileUtils} from "./utils/file-utils.js";
 import {FreelancersView} from "./components/freelancers/freelancers-view.js";
+import {FreelancersCreate} from "./components/freelancers/freelancers-create";
+import {FreelancersEdit} from "./components/freelancers/freelancers-edit";
+import {FreelancersDelete} from "./components/freelancers/freelancers-delete";
 
 export class Router {
     constructor() {
@@ -84,9 +87,36 @@ export class Router {
                 filePathTemplate: '/templates/pages/freelancers/view.html',
                 useLayout: '/templates/layout.html',
                 load: () => {
-                    new FreelancersView();
+                    new FreelancersView(this.openNewRoute.bind(this));
                 }
-            }
+            },
+            {
+                route: '/freelancers/create',
+                title: 'Создание фрилансера',
+                filePathTemplate: '/templates/pages/freelancers/create.html',
+                useLayout: '/templates/layout.html',
+                load: () => {
+                    new FreelancersCreate(this.openNewRoute.bind(this));
+                },
+                scripts: ['bs-custom-file-input.min.js']
+            },
+            {
+                route: '/freelancers/edit',
+                title: 'Редактирование фрилансера',
+                filePathTemplate: '/templates/pages/freelancers/edit.html',
+                useLayout: '/templates/layout.html',
+                load: () => {
+                    new FreelancersEdit(this.openNewRoute.bind(this));
+                },
+                scripts: ['bs-custom-file-input.min.js']
+            },
+            {
+                route: '/freelancers/delete',
+                load: () => {
+                    new FreelancersDelete(this.openNewRoute.bind(this));
+                }
+
+            },
         ];
         this.initEvents();
     }
