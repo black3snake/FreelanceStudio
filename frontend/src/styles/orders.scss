@@ -1,0 +1,9 @@
+.orders {
+    .order-tools {
+        display: flex;
+        flex-direction: row;
+        gap: 5px;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
