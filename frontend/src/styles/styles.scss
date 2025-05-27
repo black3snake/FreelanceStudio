@@ -4,6 +4,7 @@
 body {
     //background: #93b893;
 }
+
 .sidebar {
     .image {
         i.fa {
@@ -14,4 +15,14 @@ body {
             justify-content: center;
         }
     }
+}
+
+.fc-daygrid-event {
+    white-space: normal;
+    //.fc-event-title {
+    //}
+}
+
+.fc-daygrid-block-event .fc-event-title {
+    padding: 3px;
 }
