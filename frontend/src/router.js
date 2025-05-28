@@ -13,12 +13,14 @@ import {OrdersView} from "./components/orders/orders-view";
 import {OrdersCreate} from "./components/orders/orders-create";
 import {OrdersEdit} from "./components/orders/orders-edit";
 import {OrdersDelete} from "./components/orders/orders-delete";
+import {AuthUtils} from "./utils/auth-utils";
 
 export class Router {
     constructor() {
         this.titlePageElement = document.getElementById('title');
         this.contentPageElement = document.getElementById('content');
         this.adminlteStyleElement = document.getElementById('adminlte_style');
+        this.userName = null;
 
         this.routes = [
             {
@@ -187,7 +189,7 @@ export class Router {
         document.addEventListener('click', this.clickHandler.bind(this));
     }
 
-    async openNewRoute(url){
+    async openNewRoute(url) {
         const currentRoute = window.location.pathname;
         history.pushState({}, '', url);
         await this.activateRoute(null, currentRoute);
@@ -255,7 +257,7 @@ export class Router {
                 for (const script of newRoute.scripts) {
                     await FileUtils.loadPageScript('/js/' + script);
                 }
-                
+
             }
 
             if (newRoute.title) {
@@ -272,6 +274,16 @@ export class Router {
                     contentBlock = document.getElementById('content-layout');
                     document.body.classList.add('sidebar-mini');
                     document.body.classList.add('layout-fixed');
+
+                    this.profileNameElement = document.getElementById('profile-name');
+                    if (!this.userName) {
+                        const userInfo = AuthUtils.getAuthInfo(AuthUtils.userinfoTokenKey) ? JSON.parse(AuthUtils.getAuthInfo(AuthUtils.userinfoTokenKey)) : '';
+                        if (userInfo && userInfo.name) {
+                            this.userName = userInfo.name;
+                        }
+                    }
+                    this.profileNameElement.innerText = this.userName;
+
                     this.activateMenuItem(newRoute);
                 } else {
                     document.body.classList.remove('sidebar-mini');

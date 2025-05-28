@@ -2,6 +2,7 @@ import {HttpUtils} from "../../utils/http-utils";
 import config from "../../config/config";
 import {CommonUtils} from "../../utils/common-utils";
 import {FileUtils} from "../../utils/file-utils";
+import {ValidationUtils} from "../../utils/validation-utils";
 
 export class FreelancersEdit {
     constructor(openNewRoute) {
@@ -22,6 +23,17 @@ export class FreelancersEdit {
         this.infoInputElement = document.getElementById('infoInput');
         this.selectLevelElement = document.getElementById('selectLevel');
         this.avatarInputElement = document.getElementById('avatarInput');
+
+        this.validations = [
+            { element: this.nameInputElement },
+            { element: this.lastNameInputElement },
+            { element: this.educationInputElement },
+            { element: this.emailInputElement,
+                options: { pattern: /^([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/}},
+            { element: this.locationInputElement },
+            { element: this.skillsInputElement },
+            { element: this.infoInputElement },
+        ];
 
         bsCustomFileInput.init();
         this.getFreelancer(id).then();
@@ -81,38 +93,10 @@ export class FreelancersEdit {
 
     }
 
-
-    validateForm() {
-        let isValid = true;
-        let textInputArray = [
-            this.nameInputElement, this.lastNameInputElement, this.educationInputElement,
-            this.locationInputElement, this.skillsInputElement, this.infoInputElement,
-        ];
-
-        for (let i = 0; i < textInputArray.length; i++) {
-            if (textInputArray[i].value) {
-                textInputArray[i].classList.remove('is-invalid');
-            } else {
-                textInputArray[i].classList.add('is-invalid');
-                isValid = false;
-            }
-
-        }
-
-        if (this.emailInputElement.value && this.emailInputElement.value.match(/^([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/)) {
-            this.emailInputElement.classList.remove('is-invalid');
-        } else {
-            this.emailInputElement.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
     async updateFreelance(e) {
         e.preventDefault();
 
-        if (this.validateForm()) {
+        if (ValidationUtils.validationForm(this.validations)) {
             // let elementIz = [];
             // for (let item of this.elementsValueMap) {
             //     for (let i = 0; i < this.elementsValueArray.length; i++) {

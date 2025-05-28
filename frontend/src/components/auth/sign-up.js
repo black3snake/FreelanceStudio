@@ -1,5 +1,6 @@
 import {AuthUtils} from "../../utils/auth-utils.js";
 import {HttpUtils} from "../../utils/http-utils.js";
+import {ValidationUtils} from "../../utils/validation-utils";
 
 export class SignUp {
     constructor(openNewRoute) {
@@ -20,57 +21,26 @@ export class SignUp {
         this.processButtonElement = document.getElementById('process-button');
         this.processButtonElement.addEventListener('click', this.signUp.bind(this));
 
-    }
+        this.validations = [
+            {element:this.nameElement},
+            {element:this.lastNameElement},
+            {element: this.emailElement, options: {pattern: /^([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/}},
+            {element: this.passwordElement, options: {pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/}},
+            {element: this.passwordRepeatElement, options: {compareTo: this.passwordElement.value }},
+            {element: this.agreeElement, options: {checked: true}},
+        ]
 
-    validateForm() {
-        let isValid = true;
-
-        if (this.nameElement.value) {
-            this.nameElement.classList.remove('is-invalid');
-        } else {
-            this.nameElement.classList.add('is-invalid');
-            isValid = false;
-        }
-        if (this.lastNameElement.value) {
-            this.lastNameElement.classList.remove('is-invalid');
-        } else {
-            this.lastNameElement.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        if (this.emailElement.value && this.emailElement.value.match(/^([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/)) {
-            this.emailElement.classList.remove('is-invalid');
-        } else {
-            this.emailElement.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        if (this.passwordElement.value && this.passwordElement.value.match(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/)) {
-            this.passwordElement.classList.remove('is-invalid');
-        } else {
-            this.passwordElement.classList.add('is-invalid');
-            isValid = false;
-        }
-        if (this.passwordRepeatElement.value && this.passwordElement.value === this.passwordRepeatElement.value) {
-            this.passwordRepeatElement.classList.remove('is-invalid');
-        } else {
-            this.passwordRepeatElement.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        if (this.agreeElement.checked) {
-            this.agreeElement.classList.remove('is-invalid');
-        } else {
-            this.agreeElement.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        return isValid;
     }
 
     async signUp() {
         this.commonErrorElement.style.display = 'none';
-        if (this.validateForm()) {
+        this.validations.forEach(validation => {
+            if (validation.element === this.passwordRepeatElement) {
+                validation.options.compareTo = this.passwordElement.value;
+            }
+        })
+
+        if (ValidationUtils.validationForm(this.validations)) {
             // request
             const result = await HttpUtils.request('/signup', 'POST', false, {
                 name: this.nameElement.value,

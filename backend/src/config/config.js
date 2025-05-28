@@ -1,7 +1,7 @@
 const config = {
     secret: '23rfewwef2f3deASFf9iwgefjqifdWA',
     env: process.env.ENV,
-    port: 4000,
+    port: 5000,
     db: {
         dbUrl: 'mongodb://127.0.0.1:27017',
         dbName: 'freelancers',

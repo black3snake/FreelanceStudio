@@ -1,4 +1,4 @@
-const host = 'http://localhost:4000';
+const host = process.env.HOST;
 const config = {
     host: host,
     api: host + '/api',

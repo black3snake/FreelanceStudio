@@ -1,5 +1,6 @@
 import {HttpUtils} from "../../utils/http-utils";
 import {FileUtils} from "../../utils/file-utils";
+import {ValidationUtils} from "../../utils/validation-utils";
 
 export class FreelancersCreate {
     constructor(openNewRoute) {
@@ -17,39 +18,24 @@ export class FreelancersCreate {
         this.selectLevelElement = document.getElementById('selectLevel')
         this.avatarInputElement = document.getElementById('avatarInput')
 
-    }
-
-    validateForm() {
-        let isValid = true;
-        let textInputArray = [
-            this.nameInputElement, this.lastNameInputElement, this.educationInputElement,
-            this.locationInputElement, this.skillsInputElement, this.infoInputElement,
+        this.validations = [
+            { element: this.nameInputElement },
+            { element: this.lastNameInputElement },
+            { element: this.educationInputElement },
+            { element: this.emailInputElement,
+                options: { pattern: /^([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/}},
+            { element: this.locationInputElement },
+            { element: this.skillsInputElement },
+            { element: this.infoInputElement },
         ];
 
-        for (let i = 0; i < textInputArray.length; i++) {
-            if (textInputArray[i].value) {
-                textInputArray[i].classList.remove('is-invalid');
-            } else {
-                textInputArray[i].classList.add('is-invalid');
-                isValid = false;
-            }
-
-        }
-
-        if (this.emailInputElement.value && this.emailInputElement.value.match(/^([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/)) {
-            this.emailInputElement.classList.remove('is-invalid');
-        } else {
-            this.emailInputElement.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        return isValid;
     }
+
 
     async saveFreelancer(e) {
         e.preventDefault();
 
-        if (this.validateForm()) {
+        if (ValidationUtils.validationForm(this.validations)) {
             const createData = {
                 name: this.nameInputElement.value,
                 lastName: this.lastNameInputElement.value,
@@ -60,7 +46,6 @@ export class FreelancersCreate {
                 skills: this.skillsInputElement.value,
                 info: this.infoInputElement.value,
             }
-
 
             if (this.avatarInputElement.files && this.avatarInputElement.files.length > 0) {
                 createData.avatarBase64 = await FileUtils.convertFileToBase64(this.avatarInputElement.files[0]);

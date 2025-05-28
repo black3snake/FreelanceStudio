@@ -1,4 +1,5 @@
 import {HttpUtils} from "../../utils/http-utils";
+import {ValidationUtils} from "../../utils/validation-utils";
 
 export class OrdersEdit {
     constructor(openNewRoute) {
@@ -27,6 +28,10 @@ export class OrdersEdit {
         this.completeCardElement = document.getElementById('complete-card');
         this.deadlineCardElement = document.getElementById('deadline-card');
 
+        this.validations = [
+            {element: this.amountInputElement},
+            {element: this.descriptionInputElement},
+        ]
 
         this.init(id).then();
     }
@@ -165,41 +170,10 @@ export class OrdersEdit {
 
     }
 
-    validateForm() {
-        let isValid = true;
-
-        if (this.amountInputElement.value && /^\d+$/.test(this.amountInputElement.value)) {
-            this.amountInputElement.classList.remove('is-invalid');
-        } else {
-            this.amountInputElement.classList.add('is-invalid');
-            isValid = false;
-        }
-        if (this.descriptionInputElement.value) {
-            this.descriptionInputElement.classList.remove('is-invalid');
-        } else {
-            this.descriptionInputElement.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        // if (this.scheduledDate) {
-        //     this.scheduledCardElement.classList.remove('is-invalid');
-        // } else {
-        //     this.scheduledCardElement.classList.add('is-invalid');
-        //     isValid = false;
-        // }
-        // if (this.deadlineDate) {
-        //     this.deadlineCardElement.classList.remove('is-invalid');
-        // } else {
-        //     this.deadlineCardElement.classList.add('is-invalid');
-        //     isValid = false;
-        // }
-        return isValid;
-    }
-
     async updateOrder(e) {
         e.preventDefault();
 
-        if (this.validateForm()) {
+        if (ValidationUtils.validationForm(this.validations)) {
             const changedData = {};
             // input
             if (parseInt(this.amountInputElement.value) !== parseInt(this.orderOriginalData.amount)) {

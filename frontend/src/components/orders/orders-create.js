@@ -1,5 +1,6 @@
 import {HttpUtils} from "../../utils/http-utils";
 import {FileUtils} from "../../utils/file-utils";
+import {ValidationUtils} from "../../utils/validation-utils";
 
 export class OrdersCreate {
     constructor(openNewRoute) {
@@ -68,6 +69,11 @@ export class OrdersCreate {
         this.completeCardElement = document.getElementById('complete-card');
         this.deadlineCardElement = document.getElementById('deadline-card');
 
+        this.validations = [
+            {element: this.amountInputElement},
+            {element: this.descriptionInputElement},
+        ]
+
         this.getFreelancers().then();
     }
 
@@ -97,43 +103,13 @@ export class OrdersCreate {
 
     }
 
-    validateForm() {
-        let isValid = true;
-
-        if (this.amountInputElement.value && /^\d+$/.test(this.amountInputElement.value))  {
-            this.amountInputElement.classList.remove('is-invalid');
-        } else {
-            this.amountInputElement.classList.add('is-invalid');
-            isValid = false;
-        }
-        if (this.descriptionInputElement.value )  {
-            this.descriptionInputElement.classList.remove('is-invalid');
-        } else {
-            this.descriptionInputElement.classList.add('is-invalid');
-            isValid = false;
-        }
-
-        if (this.scheduledDate) {
-            this.scheduledCardElement.classList.remove('is-invalid');
-        } else {
-            this.scheduledCardElement.classList.add('is-invalid');
-            isValid = false;
-        }
-        if (this.deadlineDate) {
-            this.deadlineCardElement.classList.remove('is-invalid');
-        } else {
-            this.deadlineCardElement.classList.add('is-invalid');
-            isValid = false;
-        }
-        return isValid;
-    }
-
-
-
     async saveOrder(e) {
         e.preventDefault();
 
-        if (this.validateForm()) {
+        this.validations.push({element: this.scheduledCardElement, options:{checkProperty: this.scheduledDate}});
+        this.validations.push({element: this.deadlineCardElement, options:{checkProperty: this.deadlineDate}});
+
+        if (ValidationUtils.validationForm(this.validations)) {
             const createData = {
                 description: this.descriptionInputElement.value,
                 deadlineDate: this.deadlineDate.toISOString(),
