@@ -1,27 +1,25 @@
-import {HttpUtils} from "../../utils/http-utils";
+import {UrlUtils} from "../../utils/url-utils";
+import {FreelancersService} from "../../services/freelancers-service";
 
 export class FreelancersDelete {
     constructor(openNewRoute) {
         this.openNewRoute = openNewRoute;
-        const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get("id");
+        const id = UrlUtils.getUrlParam('id');
         if (!id) {
             return this.openNewRoute('/');
         }
 
-        this.deleteFreelance(id).then();
+        this.deleteFreelancer(id).then();
     }
 
-    async deleteFreelance(id) {
-        const result = await HttpUtils.request('/freelancers/' + id, 'DELETE');
-        if (result.redirect) {
-            return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+    async deleteFreelancer(id) {
+        const response = await FreelancersService.deleteFreelancer(id);
+
+        if (response.error) {
+            alert(response.error);
+            return response.redirect ? this.openNewRoute(response.redirect) : null;
         }
 
-        if (result.error || !result.response || (result.response && result.response.error)) {
-            console.log(result.response.message);
-            return alert('Возникла ошибка при удалению фрилансера');
-        }
         return this.openNewRoute('/freelancers');
     }
 }

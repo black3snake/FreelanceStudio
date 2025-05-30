@@ -1,6 +1,6 @@
 import {AuthUtils} from "../../utils/auth-utils.js";
-import {HttpUtils} from "../../utils/http-utils.js";
 import {ValidationUtils} from "../../utils/validation-utils";
+import {AuthService} from "../../services/auth-service";
 
 export class SignUp {
     constructor(openNewRoute) {
@@ -10,16 +10,7 @@ export class SignUp {
             return this.openNewRoute('/');
         }
 
-        this.nameElement = document.getElementById('name');
-        this.lastNameElement = document.getElementById('last-name');
-        this.emailElement = document.getElementById('email');
-        this.passwordElement = document.getElementById('password');
-        this.passwordRepeatElement = document.getElementById('password-repeat');
-        this.agreeElement = document.getElementById('agree');
-        this.commonErrorElement = document.getElementById('common-error');
-
-        this.processButtonElement = document.getElementById('process-button');
-        this.processButtonElement.addEventListener('click', this.signUp.bind(this));
+        this.findElements();
 
         this.validations = [
             {element:this.nameElement},
@@ -28,8 +19,20 @@ export class SignUp {
             {element: this.passwordElement, options: {pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/}},
             {element: this.passwordRepeatElement, options: {compareTo: this.passwordElement.value }},
             {element: this.agreeElement, options: {checked: true}},
-        ]
+        ];
 
+        this.processButtonElement.addEventListener('click', this.signUp.bind(this));
+    }
+
+    findElements() {
+        this.nameElement = document.getElementById('name');
+        this.lastNameElement = document.getElementById('last-name');
+        this.emailElement = document.getElementById('email');
+        this.passwordElement = document.getElementById('password');
+        this.passwordRepeatElement = document.getElementById('password-repeat');
+        this.agreeElement = document.getElementById('agree');
+        this.commonErrorElement = document.getElementById('common-error');
+        this.processButtonElement = document.getElementById('process-button');
     }
 
     async signUp() {
@@ -42,52 +45,23 @@ export class SignUp {
 
         if (ValidationUtils.validationForm(this.validations)) {
             // request
-            const result = await HttpUtils.request('/signup', 'POST', false, {
+            const signUpResult = await AuthService.signUp({
                 name: this.nameElement.value,
                 lastName: this.lastNameElement.value,
                 email: this.emailElement.value,
                 password: this.passwordElement.value
-            });
+            })
 
-            if (result.error || !result.response || (result.response && (!result.response.accessToken || !result.response.refreshToken || !result.response.id || !result.response.name)) ) {
-                this.commonErrorElement.style.display = 'block';
-                return;
+            if (signUpResult) {
+                AuthUtils.setAuthInfo(signUpResult.accessToken, signUpResult.refreshToken, {
+                    id: signUpResult.id,
+                    name: signUpResult.name,
+                });
+                return this.openNewRoute('/');
             }
 
-            AuthUtils.setAuthInfo(result.response.accessToken, result.response.refreshToken, {
-                id: result.response.id,
-                name: result.response.name,
-            });
-            this.openNewRoute('/');
+            this.commonErrorElement.style.display = 'block';
 
-
-
-
-            // const response = await fetch('http://localhost:3000/api/signup', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //         'Accept': 'application/json',
-            //     },
-            //     body: JSON.stringify( {
-            //         name: this.nameElement.value,
-            //         lastName: this.lastNameElement.value,
-            //         email: this.emailElement.value,
-            //         password: this.passwordElement.value
-            //     })
-            // });
-            // const result = await response.json();
-            //
-            // if (result.error || !result.accessToken || !result.refreshToken || !result.id || !result.name) {
-            //     this.commonErrorElement.style.display = 'block';
-            //     return;
-            // }
-            //
-            // AuthUtils.setAuthInfo(result.accessToken, result.refreshToken, {
-            //     id: result.id,
-            //     name: result.name,
-            // });
-            // this.openNewRoute('/');
         }
     }
 

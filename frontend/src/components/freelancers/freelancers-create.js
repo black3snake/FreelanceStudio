@@ -1,6 +1,6 @@
-import {HttpUtils} from "../../utils/http-utils";
 import {FileUtils} from "../../utils/file-utils";
 import {ValidationUtils} from "../../utils/validation-utils";
+import {FreelancersService} from "../../services/freelancers-service";
 
 export class FreelancersCreate {
     constructor(openNewRoute) {
@@ -8,15 +8,7 @@ export class FreelancersCreate {
         document.getElementById('saveButton').addEventListener('click', this.saveFreelancer.bind(this))
         bsCustomFileInput.init();
 
-        this.nameInputElement = document.getElementById('nameInput')
-        this.lastNameInputElement = document.getElementById('lastNameInput')
-        this.emailInputElement = document.getElementById('emailInput')
-        this.educationInputElement = document.getElementById('educationInput')
-        this.locationInputElement = document.getElementById('locationInput')
-        this.skillsInputElement = document.getElementById('skillsInput')
-        this.infoInputElement = document.getElementById('infoInput')
-        this.selectLevelElement = document.getElementById('selectLevel')
-        this.avatarInputElement = document.getElementById('avatarInput')
+        this.findElements();
 
         this.validations = [
             { element: this.nameInputElement },
@@ -31,6 +23,17 @@ export class FreelancersCreate {
 
     }
 
+    findElements() {
+        this.nameInputElement = document.getElementById('nameInput')
+        this.lastNameInputElement = document.getElementById('lastNameInput')
+        this.emailInputElement = document.getElementById('emailInput')
+        this.educationInputElement = document.getElementById('educationInput')
+        this.locationInputElement = document.getElementById('locationInput')
+        this.skillsInputElement = document.getElementById('skillsInput')
+        this.infoInputElement = document.getElementById('infoInput')
+        this.selectLevelElement = document.getElementById('selectLevel')
+        this.avatarInputElement = document.getElementById('avatarInput')
+    }
 
     async saveFreelancer(e) {
         e.preventDefault();
@@ -51,16 +54,14 @@ export class FreelancersCreate {
                 createData.avatarBase64 = await FileUtils.convertFileToBase64(this.avatarInputElement.files[0]);
             }
 
-            const result = await HttpUtils.request('/freelancers', 'POST', true, createData);
-            if (result.redirect) {
-                return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+            const response = await FreelancersService.createFreelancer(createData);
+
+            if (response.error) {
+                alert(response.error);
+                return response.redirect ? this.openNewRoute(response.redirect) : null;
             }
 
-            if (result.error || !result.response || (result.response && result.response.error)) {
-                console.log(result.response.message);
-                return alert('Возникла ошибка при добавлении фрилансер');
-            }
-            return this.openNewRoute('/freelancers/view?id=' + result.response.id);
+            return this.openNewRoute('/freelancers/view?id=' + response.id);
         }
 
     }

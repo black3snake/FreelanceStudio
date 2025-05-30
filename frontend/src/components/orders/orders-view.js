@@ -1,12 +1,12 @@
-import {HttpUtils} from "../../utils/http-utils";
 import config from "../../config/config";
 import {CommonUtils} from "../../utils/common-utils";
+import {UrlUtils} from "../../utils/url-utils";
+import {OrderService} from "../../services/orders-service";
 
 export class OrdersView {
     constructor(openNewRoute) {
         this.openNewRoute = openNewRoute;
-        const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get("id");
+        const id = UrlUtils.getUrlParam('id');
         if (!id) {
             return this.openNewRoute('/');
         }
@@ -17,19 +17,14 @@ export class OrdersView {
     }
 
     async getOrder(id) {
-        // const id = window.location.href.split('id=')[1];
-        const result = await HttpUtils.request('/orders/' + id);
-        if (result.redirect) {
-            return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+        const response = await OrderService.getOrder(id);
+
+        if (response.error) {
+            alert(response.error);
+            return response.redirect ? this.openNewRoute(response.redirect) : null;
         }
 
-        if (result.error || !result.response || (result.response && (result.response.error || !result.response.id))) {
-            console.log(result.response.message);
-            return alert('Возникла ошибка при запросе заказа');
-            // return console.log('Возникла ошибка при запросе фрилансеров');
-        }
-
-        this.showOrder(result.response);
+             this.showOrder(response.order);
     }
 
     showOrder(order) {

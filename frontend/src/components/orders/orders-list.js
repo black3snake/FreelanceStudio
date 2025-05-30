@@ -1,5 +1,5 @@
-import {HttpUtils} from "../../utils/http-utils";
 import {CommonUtils} from "../../utils/common-utils";
+import {OrderService} from "../../services/orders-service";
 
 export class OrdersList {
     constructor(openNewRoute) {
@@ -9,17 +9,14 @@ export class OrdersList {
     }
 
     async getOrdersList() {
-        const result = await HttpUtils.request('/orders');
-        if (result.redirect) {
-            return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+        const response = await OrderService.getOrders();
+
+        if (response.error) {
+            alert(response.error);
+            return response.redirect ? this.openNewRoute(response.redirect) : null;
         }
 
-        if (result.error || !result.response || (result.response && (result.response.error || !result.response.orders))) {
-            return alert('Возникла ошибка при запросе заказов');
-            // return console.log('Возникла ошибка при запросе фрилансеров');
-        }
-
-        this.showRecords(result.response.orders);
+        this.showRecords(response.orders);
     }
 
     showRecords(orders) {
@@ -38,11 +35,7 @@ export class OrdersList {
 
 
             trElement.insertCell().innerText = orders[i].completeDate ? (new Date(orders[i].completeDate)).toLocaleString('ru-RU', {}) : '';
-            trElement.insertCell().innerHTML = '<div class="order-tools"> ' +
-                '<a href="/orders/view?id=' + orders[i].id + '" class="fas fa-eye"></a>' +
-                '<a href="/orders/edit?id=' + orders[i].id + '" class="fas fa-edit"></a>' +
-                '<a href="/orders/delete?id=' + orders[i].id + '" class="fas fa-trash"></a>' +
-                '</div>';
+            trElement.insertCell().innerHTML = CommonUtils.generateGridToolsColumn('orders', orders[i].id)
 
 
             recordsElement.appendChild(trElement);

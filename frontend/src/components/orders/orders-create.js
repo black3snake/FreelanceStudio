@@ -1,6 +1,6 @@
-import {HttpUtils} from "../../utils/http-utils";
-import {FileUtils} from "../../utils/file-utils";
 import {ValidationUtils} from "../../utils/validation-utils";
+import {FreelancersService} from "../../services/freelancers-service";
+import {OrderService} from "../../services/orders-service";
 
 export class OrdersCreate {
     constructor(openNewRoute) {
@@ -15,59 +15,35 @@ export class OrdersCreate {
         const calendarComplete = $('#complete-calendar')
         const calendarDeadline = $('#deadline-calendar')
 
-        calendarScheduled.datetimepicker({
-            // format: 'L',
+        const calendarOptions = {
             inline: true,
             locale: 'ru',
             icons: {
                 time: 'far fa-clock',
             },
             useCurrent: false,
-        });
+        }
+
+        calendarScheduled.datetimepicker(calendarOptions);
         calendarScheduled.on("change.datetimepicker", (e) => {
             this.scheduledDate = e.date;
             // console.log(this.scheduledDate)
         });
-
-        calendarComplete.datetimepicker({
-            // format: 'L',
-            inline: true,
-            locale: 'ru',
-            icons: {
-                time: 'far fa-clock',
-                clear: 'fas fa-trash',
-            },
-            useCurrent: false,
-            buttons: {
-                showClear: true
-
-            }
+        calendarDeadline.datetimepicker(calendarOptions);
+        calendarDeadline.on("change.datetimepicker", (e) => {
+            this.deadlineDate = e.date;
         });
+
+        calendarOptions.buttons = { showClear: true}
+        calendarComplete.datetimepicker(calendarOptions);
         calendarComplete.on("change.datetimepicker", (e) => {
             this.completeDate = e.date;
             // console.log(this.completeDate);
         });
 
-        calendarDeadline.datetimepicker({
-            // format: 'L',
-            inline: true,
-            locale: 'ru',
-            icons: {
-                time: 'far fa-clock',
-            },
-            useCurrent: false,
-        });
-        calendarDeadline.on("change.datetimepicker", (e) => {
-            this.deadlineDate = e.date;
-        });
 
-        this.freelancerSelectElement = document.getElementById('freelancerSelect');
-        this.statusSelectElement = document.getElementById('statusSelect');
-        this.amountInputElement = document.getElementById('amountInput');
-        this.descriptionInputElement = document.getElementById('descriptionInput');
-        this.scheduledCardElement = document.getElementById('scheduled-card');
-        this.completeCardElement = document.getElementById('complete-card');
-        this.deadlineCardElement = document.getElementById('deadline-card');
+
+        this.findElements();
 
         this.validations = [
             {element: this.amountInputElement},
@@ -77,23 +53,28 @@ export class OrdersCreate {
         this.getFreelancers().then();
     }
 
+    findElements() {
+        this.freelancerSelectElement = document.getElementById('freelancerSelect');
+        this.statusSelectElement = document.getElementById('statusSelect');
+        this.amountInputElement = document.getElementById('amountInput');
+        this.descriptionInputElement = document.getElementById('descriptionInput');
+        this.scheduledCardElement = document.getElementById('scheduled-card');
+        this.completeCardElement = document.getElementById('complete-card');
+        this.deadlineCardElement = document.getElementById('deadline-card');
+    }
 
     async getFreelancers() {
-        const result = await HttpUtils.request('/freelancers');
-        if (result.redirect) {
-            return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+        const response = await FreelancersService.getFreelancers();
+
+        if (response.error) {
+            alert(response.error);
+            return response.redirect ? this.openNewRoute(response.redirect) : null;
         }
 
-        if (result.error || !result.response || (result.response && (result.response.error || !result.response.freelancers))) {
-            return alert('Возникла ошибка при запросе фрилансеров');
-            // return console.log('Возникла ошибка при запросе фрилансеров');
-        }
-
-        const freelancers = result.response.freelancers;
-        for (let i = 0; i < freelancers.length; i++) {
+        for (let i = 0; i < response.freelancers.length; i++) {
             const option = document.createElement("option");
-            option.value = freelancers[i].id;
-            option.innerText = freelancers[i].name + ' ' + freelancers[i].lastName;
+            option.value = response.freelancers[i].id;
+            option.innerText = response.freelancers[i].name + ' ' + response.freelancers[i].lastName;
             this.freelancerSelectElement.appendChild(option);
         }
 
@@ -122,16 +103,14 @@ export class OrdersCreate {
                 createData.completeDate = this.completeDate.toISOString();
             }
 
-            const result = await HttpUtils.request('/orders', 'POST', true, createData);
-            if (result.redirect) {
-                return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+            const response = await OrderService.createOrder(createData);
+
+            if (response.error) {
+                alert(response.error);
+                return response.redirect ? this.openNewRoute(response.redirect) : null;
             }
 
-            if (result.error || !result.response || (result.response && result.response.error)) {
-                console.log(result.response.message);
-                return alert('Возникла ошибка при добавлении заказа');
-            }
-            return this.openNewRoute('/orders/view?id=' + result.response.id);
+            return this.openNewRoute('/orders/view?id=' + response.id);
         }
     }
 }

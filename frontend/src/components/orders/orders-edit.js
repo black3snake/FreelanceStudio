@@ -1,12 +1,13 @@
-import {HttpUtils} from "../../utils/http-utils";
 import {ValidationUtils} from "../../utils/validation-utils";
+import {UrlUtils} from "../../utils/url-utils";
+import {FreelancersService} from "../../services/freelancers-service";
+import {OrderService} from "../../services/orders-service";
 
 export class OrdersEdit {
     constructor(openNewRoute) {
         this.openNewRoute = openNewRoute;
         document.getElementById('updateButton').addEventListener('click', this.updateOrder.bind(this))
-        const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get("id");
+        const id = UrlUtils.getUrlParam('id');
         if (!id) {
             return this.openNewRoute('/');
         }
@@ -19,14 +20,7 @@ export class OrdersEdit {
         this.calendarComplete = $('#complete-calendar')
         this.calendarDeadline = $('#deadline-calendar')
 
-
-        this.freelancerSelectElement = document.getElementById('freelancerSelect');
-        this.statusSelectElement = document.getElementById('statusSelect');
-        this.amountInputElement = document.getElementById('amountInput');
-        this.descriptionInputElement = document.getElementById('descriptionInput');
-        this.scheduledCardElement = document.getElementById('scheduled-card');
-        this.completeCardElement = document.getElementById('complete-card');
-        this.deadlineCardElement = document.getElementById('deadline-card');
+        this.findElements();
 
         this.validations = [
             {element: this.amountInputElement},
@@ -34,6 +28,13 @@ export class OrdersEdit {
         ]
 
         this.init(id).then();
+    }
+
+    findElements() {
+        this.freelancerSelectElement = document.getElementById('freelancerSelect');
+        this.statusSelectElement = document.getElementById('statusSelect');
+        this.amountInputElement = document.getElementById('amountInput');
+        this.descriptionInputElement = document.getElementById('descriptionInput');
     }
 
     async init(id) {
@@ -48,39 +49,31 @@ export class OrdersEdit {
 
 
     async getOrder(id) {
-        const result = await HttpUtils.request('/orders/' + id);
-        if (result.redirect) {
-            return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+        const response = await OrderService.getOrder(id);
+
+        if (response.error) {
+            alert(response.error);
+            return response.redirect ? this.openNewRoute(response.redirect) : null;
         }
 
-        if (result.error || !result.response || (result.response && (result.response.error || !result.response.id))) {
-            console.log(result.response.message);
-            return alert('Возникла ошибка при запросе заказа');
-            // return console.log('Возникла ошибка при запросе фрилансеров');
-        }
-
-        this.orderOriginalData = result.response;
-        this.completeDateEmptyDate = this.orderOriginalData.completeDate !== null;
-        return result.response
+        this.orderOriginalData = response.order;
+        return response.order;
     }
 
     async getFreelancers(freelancerId) {
-        const result = await HttpUtils.request('/freelancers');
-        if (result.redirect) {
-            return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+        const response = await FreelancersService.getFreelancers();
+
+        if (response.error) {
+            alert(response.error);
+            return response.redirect ? this.openNewRoute(response.redirect) : null;
         }
 
-        if (result.error || !result.response || (result.response && (result.response.error || !result.response.freelancers))) {
-            return alert('Возникла ошибка при запросе фрилансеров');
-            // return console.log('Возникла ошибка при запросе фрилансеров');
-        }
-
-        const freelancers = result.response.freelancers;
-        for (let i = 0; i < freelancers.length; i++) {
+        // const freelancers = response.freelancers;
+        for (let i = 0; i < response.freelancers.length; i++) {
             const option = document.createElement("option");
-            option.value = freelancers[i].id;
-            option.innerText = freelancers[i].name + ' ' + freelancers[i].lastName;
-            if (freelancers[i].id === freelancerId) {
+            option.value = response.freelancers[i].id;
+            option.innerText = response.freelancers[i].name + ' ' + response.freelancers[i].lastName;
+            if (response.freelancers[i].id === freelancerId) {
                 option.selected = true;
             }
             this.freelancerSelectElement.appendChild(option);
@@ -113,36 +106,33 @@ export class OrdersEdit {
         //     this.calendarComplete.datetimepicker('date', moment(this.orderOriginalData.completeDate));
         // }
         // Альтернатива
-        this.calendarScheduled.datetimepicker({
-            // format: 'L',
+        const calendarOptions = {
             inline: true,
             locale: 'ru',
             icons: {
                 time: 'far fa-clock',
             },
             useCurrent: false,
-            date: order.scheduledDate
-        });
+
+        }
+
+        const objectScheduledCalendar = {...calendarOptions, ...{date: order.scheduledDate}}
+        // this.calendarScheduled.datetimepicker(Object.assign({}), calendarOptions, {date: order.scheduledDate});
+        this.calendarScheduled.datetimepicker(objectScheduledCalendar);
         this.calendarScheduled.on("change.datetimepicker", (e) => {
             this.scheduledDate = e.date;
             // console.log(this.scheduledDate)
         });
 
-        this.calendarComplete.datetimepicker({
-            // format: 'L',
-            inline: true,
-            locale: 'ru',
-            icons: {
-                time: 'far fa-clock',
-                clear: 'fas fa-trash',
-            },
-            useCurrent: false,
-            buttons: {
-                showClear: true
-
-            },
-            date: order.completeDate
+        const objectDeadlineCalendar = {...calendarOptions, ...{date: order.deadlineDate}}
+        this.calendarDeadline.datetimepicker(objectDeadlineCalendar);
+        this.calendarDeadline.on("change.datetimepicker", (e) => {
+            this.deadlineDate = e.date;
         });
+
+
+        const objectCompleteCalendar = {...calendarOptions, ...{date: order.completeDate}, ...{buttons: {showClear: true}}};
+        this.calendarComplete.datetimepicker(objectCompleteCalendar);
         this.calendarComplete.on("change.datetimepicker", (e) => {
             if (e.date) {
                 this.completeDate = e.date;
@@ -152,22 +142,6 @@ export class OrdersEdit {
                 this.completeDate = null;
             }
         });
-
-
-        this.calendarDeadline.datetimepicker({
-            // format: 'L',
-            inline: true,
-            locale: 'ru',
-            icons: {
-                time: 'far fa-clock',
-            },
-            useCurrent: false,
-            date: order.deadlineDate
-        });
-        this.calendarDeadline.on("change.datetimepicker", (e) => {
-            this.deadlineDate = e.date;
-        });
-
     }
 
     async updateOrder(e) {
@@ -200,7 +174,7 @@ export class OrdersEdit {
             // console.log('Первый запуск, есть ли дата: ' + this.completeDateEmptyDate);
             // console.log(this.completeDate);
 
-            if (this.completeDate || this.completeDate === false ) {
+            if (this.completeDate || this.completeDate === false) {
                 changedData.completeDate = this.completeDate ? this.completeDate.toISOString() : null;
             }
 
@@ -212,15 +186,13 @@ export class OrdersEdit {
             }
 
             if (Object.keys(changedData).length > 0) {
-                const result = await HttpUtils.request('/orders/' + this.orderOriginalData.id, 'PUT', true, changedData);
-                if (result.redirect) {
-                    return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+                const response = await OrderService.updateOrder(this.orderOriginalData.id, changedData);
+
+                if (response.error) {
+                    alert(response.error);
+                    return response.redirect ? this.openNewRoute(response.redirect) : null;
                 }
 
-                if (result.error || !result.response || (result.response && result.response.error)) {
-                    console.log(result.response.message);
-                    return alert('Возникла ошибка при редактировании заказа');
-                }
                 return this.openNewRoute('/orders/view?id=' + this.orderOriginalData.id);
             }
 

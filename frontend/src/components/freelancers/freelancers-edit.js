@@ -1,28 +1,20 @@
-import {HttpUtils} from "../../utils/http-utils";
 import config from "../../config/config";
 import {CommonUtils} from "../../utils/common-utils";
 import {FileUtils} from "../../utils/file-utils";
 import {ValidationUtils} from "../../utils/validation-utils";
+import {UrlUtils} from "../../utils/url-utils";
+import {FreelancersService} from "../../services/freelancers-service";
 
 export class FreelancersEdit {
     constructor(openNewRoute) {
         this.openNewRoute = openNewRoute;
-        const urlParams = new URLSearchParams(window.location.search);
-        const id = urlParams.get("id");
+        const id = UrlUtils.getUrlParam('id');
         if (!id) {
             return this.openNewRoute('/');
         }
         document.getElementById('updateButton').addEventListener('click', this.updateFreelance.bind(this));
 
-        this.nameInputElement = document.getElementById('nameInput');
-        this.lastNameInputElement = document.getElementById('lastNameInput');
-        this.emailInputElement = document.getElementById('emailInput');
-        this.educationInputElement = document.getElementById('educationInput');
-        this.locationInputElement = document.getElementById('locationInput');
-        this.skillsInputElement = document.getElementById('skillsInput');
-        this.infoInputElement = document.getElementById('infoInput');
-        this.selectLevelElement = document.getElementById('selectLevel');
-        this.avatarInputElement = document.getElementById('avatarInput');
+        this.findElements();
 
         this.validations = [
             { element: this.nameInputElement },
@@ -42,20 +34,28 @@ export class FreelancersEdit {
         this.elementsValueArray = [];
     }
 
+    findElements() {
+        this.nameInputElement = document.getElementById('nameInput');
+        this.lastNameInputElement = document.getElementById('lastNameInput');
+        this.emailInputElement = document.getElementById('emailInput');
+        this.educationInputElement = document.getElementById('educationInput');
+        this.locationInputElement = document.getElementById('locationInput');
+        this.skillsInputElement = document.getElementById('skillsInput');
+        this.infoInputElement = document.getElementById('infoInput');
+        this.selectLevelElement = document.getElementById('selectLevel');
+        this.avatarInputElement = document.getElementById('avatarInput');
+    }
+
     async getFreelancer(id) {
-        const result = await HttpUtils.request('/freelancers/' + id);
-        if (result.redirect) {
-            return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+        const response = await FreelancersService.getFreelancer(id);
+
+        if (response.error) {
+            alert(response.error);
+            return response.redirect ? this.openNewRoute(response.redirect) : null;
         }
 
-        if (result.error || !result.response || (result.response && (result.response.error || !result.response.id))) {
-            console.log(result.response.message);
-            return alert('Возникла ошибка при запросе фрилансер');
-            // return console.log('Возникла ошибка при запросе фрилансеров');
-        }
-
-        this.freelancersOriginalData = result.response;
-        this.showFreelancer(result.response);
+        this.freelancersOriginalData = response.freelancer;
+        this.showFreelancer(response.freelancer);
     }
 
     showFreelancer(freelancer) {
@@ -140,15 +140,13 @@ export class FreelancersEdit {
             }
 
             if (Object.keys(changedData).length > 0) {
-                const result = await HttpUtils.request('/freelancers/' + this.freelancersOriginalData.id, 'PUT', true, changedData);
-                if (result.redirect) {
-                    return this.openNewRoute(result.redirect);  // перевод пользователя на другую страницу
+                const response = await FreelancersService.updateFreelancer(this.freelancersOriginalData.id, changedData);
+
+                if (response.error) {
+                    alert(response.error);
+                    return response.redirect ? this.openNewRoute(response.redirect) : null;
                 }
 
-                if (result.error || !result.response || (result.response && result.response.error)) {
-                    console.log(result.response.message);
-                    return alert('Возникла ошибка при редактировании фрилансер');
-                }
                 return this.openNewRoute('/freelancers/view?id=' + this.freelancersOriginalData.id);
             }
         }
